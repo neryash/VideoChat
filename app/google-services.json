@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "407923135558",
+    "firebase_url": "https://voicechatter-b4cf9.firebaseio.com",
+    "project_id": "voicechatter-b4cf9",
+    "storage_bucket": "voicechatter-b4cf9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:407923135558:android:664af0b469f9f5e3162647",
+        "android_client_info": {
+          "package_name": "com.nerya.vc"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "407923135558-ng37c5fpdgrl2d186k9g0k9p3cl2k5d4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuo8nqPWIJk8-vJf35_F1bcMMVJQ44Dpc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "407923135558-ng37c5fpdgrl2d186k9g0k9p3cl2k5d4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
