@@ -1,8 +1,12 @@
 package com.nerya.vc;
 
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -34,6 +38,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -50,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private String uid = OpeningActivity.userId;
     private Bitmap bitmapOfCam;
     private ImageView callerImg;
+    private int QUALITY;
     //FTlksbjvVA
 
     @Override
@@ -61,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
         mPreviewView = findViewById(R.id.camera);
         callerImg = findViewById(R.id.callerImg);
         db = FirebaseDatabase.getInstance();
+        QUALITY = 40;
         dbRf = db.getReference(uid);
         usrDbRf = db.getReference(callUid);
         if(!callUid.equals("cld")){
@@ -95,8 +102,6 @@ public class MainActivity extends AppCompatActivity {
                     periodicUpdate.run();
                     initForUser(callUid,callerImg);
                 }else {
-                    Log.i("heyy",snapshot.getValue().toString());
-                    Log.i("heyy",snapshot.getValue().toString().equals("idle") + "");
                     if(snapshot.getValue().toString().equals("idle")) {
                         finish();
                     }
@@ -131,31 +136,45 @@ public class MainActivity extends AppCompatActivity {
     private Runnable periodicUpdate = new Runnable () {
         @RequiresApi(api = Build.VERSION_CODES.O)
         public void run() {
-            Log.i("ggg","gggggg");
             if(mPreviewView.getBitmap() != null){
                 db.getReference().child(callUid).child("status").setValue("talking");
                 db.getReference().child(uid).child("status").setValue("talking");
+                DatabaseReference myRef;
+                myRef = db.getReference(uid).child("image").child("imagePixels");
                 Thread t = new Thread() {
                     @Override
                     public void run() {
-
                         Bitmap bitty = mPreviewView.getBitmap();
+                        bitty = Bitmap.createScaledBitmap(bitty,100,133,false);
                         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                        bitty.compress(Bitmap.CompressFormat.JPEG, 15, byteArrayOutputStream);
-                        byte[] byteArray = byteArrayOutputStream .toByteArray();
+                        bitty.compress(Bitmap.CompressFormat.WEBP, QUALITY, byteArrayOutputStream);
+                        byte[] byteArray = byteArrayOutputStream.toByteArray();
+                        int cutTo = Math.min(byteArray.length, 800);
+                        byteArray = Arrays.copyOfRange(byteArray,0,cutTo);
+                        Log.i("lenn",byteArray.length + " len");
                         String encodedImage = Base64.encodeToString(byteArray, Base64.DEFAULT);
-                        DatabaseReference myRef;
-                        myRef = db.getReference(uid).child("image").child("imagePixels");
+                        Log.i("start","start");
                         myRef.setValue(encodedImage);
+                        Log.i("start","end");
                     }
                 };
                 t.start();
             }else{
                 Log.i("aaa","GGG");
             }
-            handler.postDelayed(periodicUpdate, 300);
+            handler.postDelayed(periodicUpdate, 100);
         }
     };
+    private int getBandwith(){
+        ConnectivityManager cm = (ConnectivityManager) MainActivity.this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        //should check null because in airplane mode it will be null
+        NetworkCapabilities nc = cm.getNetworkCapabilities(cm.getActiveNetwork());
+        int downSpeed = nc.getLinkDownstreamBandwidthKbps();
+        int upSpeed = nc.getLinkUpstreamBandwidthKbps();
+        return  Math.round((upSpeed-upSpeed/10)/1000);
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
@@ -222,9 +241,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void initForUser(String uuid,ImageView uimg){
         FirebaseDatabase dbU = FirebaseDatabase.getInstance();
-        DatabaseReference dburf = dbU.getReference(uuid);
-        DatabaseReference imgRef = dburf.child("image");
-        dbU.getReference(uuid).child("image").addValueEventListener(new ValueEventListener() {
+        dbU.getReference(uuid).child("image").child("imagePixels").addValueEventListener(new ValueEventListener() {
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -232,7 +249,9 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         try {
-                            byte[] decodedString = Base64.decode(dataSnapshot.child("imagePixels").getValue().toString(), Base64.DEFAULT);
+                            Log.i("band",getBandwith() + "");
+                            //QUALITY = getBandwith();
+                            byte[] decodedString = Base64.decode(dataSnapshot.getValue().toString(), Base64.DEFAULT);
                             Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                             runOnUiThread(new Runnable() {
                                 @Override

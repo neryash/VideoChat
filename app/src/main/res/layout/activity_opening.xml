@@ -28,6 +28,7 @@
         android:ems="10"
         android:hint="id"
         android:inputType="textPersonName"
+        android:text="0jrynv1m"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
